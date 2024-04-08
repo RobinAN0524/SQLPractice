@@ -19,7 +19,7 @@ WITH
     C2 AS (
         SELECT submission_date, hacker_id, name 
         FROM(
-            SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, COUNT(DISTINCT submission_id) AS daycounts, row_number() over(partition by S.submission_date order by COUNT(DISTINCT S.submission_id) desc, S.hacker_id) AS theorder
+            SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, ROW_NUMBER() OVER(PARTITION BY S.submission_date ORDER BY COUNT(DISTINCT S.submission_id) DESC, S.hacker_id) AS theorder
             FROM submissions AS S
             INNER JOIN Hackers AS H
             ON S.hacker_id = H.hacker_id
