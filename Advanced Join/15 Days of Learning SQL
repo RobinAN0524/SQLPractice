@@ -1,29 +1,33 @@
-WITH Q1 AS (
-SELECT hacker_id, submission_date
-From (SELECT hacker_id, submission_date, diff, RANK() OVER(PARTITION BY hacker_id order by submission_date) AS ranks
-FROM(
-    SELECT DISTINCT hacker_id, submission_date, MIN(submission_date) OVER (PARTITION BY hacker_id) AS MIN_DATE, DATEDIFF(day, '2016-03-01', submission_date)+1 as diff
-    FROM submissions 
-    GROUP BY hacker_id, submission_date) AS T1
-WHERE MIN_DATE = '2016-03-01' ) as T2
-WHERE diff = ranks),
- 
-Q2 AS (
-SELECT DISTINCT submission_date AS dates, COUNT(*) AS thecounts
-FROM Q1
-GROUP BY submission_date),
+/// Step 1: Find how many hackers with consecutive submission records from the first day (2016-03-01) until the given day
 
-C2 AS (
-    SELECT submission_date, hacker_id, name 
-    FROM(
-        SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, COUNT(DISTINCT submission_id) AS daycounts, row_number() over(partition by S.submission_date order by COUNT(DISTINCT S.submission_id) desc, S.hacker_id) AS theorder
-        FROM submissions AS S
-        INNER JOIN Hackers AS H
-        ON S.hacker_id = H.hacker_id
-        GROUP BY S.submission_date, S.hacker_id, H.name) AS C1
-    WHERE  theorder = 1)
+WITH 
+    Q1 AS (
+        SELECT hacker_id, submission_date
+        FROM (
+            SELECT DISTINCT hacker_id, submission_date, MIN(submission_date) OVER (PARTITION BY hacker_id) AS StartDate, DATEDIFF(day, '2016-03-01', submission_date) +1 as DateDiff, RANK() OVER(PARTITION BY hacker_id order by submission_date) AS DaysRanks
+            FROM submissions 
+            GROUP BY hacker_id, submission_date
+            ) AS T1
+        WHERE StartDate = '2016-03-01' /// This is to make sure that the hacker started from the first day of the challenge
+              AND DateDiff = DaysRanks /// This is to make sure that the hacker submitted in a row by the day being reviewed right now
+    ),
+    Q2 AS (
+        SELECT DISTINCT submission_date, COUNT(hacker_id) AS Counts1
+        FROM Q1
+        GROUP BY submission_date
+    ),
+    C2 AS (
+        SELECT submission_date, hacker_id, name 
+        FROM(
+            SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, COUNT(DISTINCT submission_id) AS daycounts, row_number() over(partition by S.submission_date order by COUNT(DISTINCT S.submission_id) desc, S.hacker_id) AS theorder
+            FROM submissions AS S
+            INNER JOIN Hackers AS H
+            ON S.hacker_id = H.hacker_id
+            GROUP BY S.submission_date, S.hacker_id, H.name) AS C1
+        WHERE  theorder = 1
+    )
 
-SELECT Q2.dates, Q2.thecounts, C2.hacker_id, C2.name 
+SELECT Q2.submission_date, Q2.Counts1, C2.hacker_id, C2.name 
 FROM Q2
 INNER JOIN C2
 ON Q2.dates = C2.submission_date
