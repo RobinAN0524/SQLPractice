@@ -1,0 +1,2 @@
+SELECT ROUND(SUM(CASE WHEN DATEDIFF(event_date, LAG(event_date) OVER(PARTITION BY player_id ORDER BY event_date)) = 1 THEN I ELSE O END)/ COUNT(*), 2) AS fraction  
+FROM Activity
