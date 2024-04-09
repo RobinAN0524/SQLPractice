@@ -1,18 +1,20 @@
 /// Solution1:
-SELECT DISTINCT name
+SELECT name
 FROM(
     SELECT M.id AS manager_id, M.name AS name, E.id AS employee_id, COUNT(E.id) OVER(PARTITION BY M.id) AS managed
     FROM Employee AS M
     INNER JOIN Employee AS E
     ON M.id = E.managerId) AS T
-WHERE managed >= 5;
+WHERE managed >= 5
+GROUP BY M.id;
 
 /// Solution2:
-SELECT DISTINCT M.name
+SELECT M.name
 FROM Employee AS M
 INNER JOIN (
   SELECT managerId, COUNT(*) AS counts
   FROM Employee
   GROUP BY managerId) AS T
 ON M.id = T.managerId
-WHERE T.counts >= 5;
+WHERE T.counts >= 5
+GROUP BY M.id;
