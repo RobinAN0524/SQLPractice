@@ -16,19 +16,22 @@ WITH
         FROM Q1
         GROUP BY submission_date
     ),
+
+/// Step 2: Find the hacker who made the most submissions on each day. Since this part is irrelevant from the first part, we will do a simple inner join on step 1 and step2. 
+/// Order logic, each day select the hacker with highest count number on that day (if there is a tie, go for the lower hacker_id), which is desc by count, asc by hacker_id
     C2 AS (
         SELECT submission_date, hacker_id, name 
         FROM(
-            SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, ROW_NUMBER() OVER(PARTITION BY S.submission_date ORDER BY COUNT(DISTINCT S.submission_id) DESC, S.hacker_id) AS theorder
+            SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, ROW_NUMBER() OVER(PARTITION BY S.submission_date ORDER BY COUNT(DISTINCT S.submission_id) DESC, S.hacker_id) AS RankOrder
             FROM submissions AS S
             INNER JOIN Hackers AS H
             ON S.hacker_id = H.hacker_id
             GROUP BY S.submission_date, S.hacker_id, H.name) AS C1
-        WHERE  theorder = 1
+        WHERE  RankOrder = 1
     )
 
 SELECT Q2.submission_date, Q2.Counts1, C2.hacker_id, C2.name 
 FROM Q2
 INNER JOIN C2
-ON Q2.dates = C2.submission_date
-ORDER BY Q2.dates;
+ON Q2.submission_date = C2.submission_date
+ORDER BY Q2.submission_date;
