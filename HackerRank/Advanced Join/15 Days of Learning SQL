@@ -1,0 +1,37 @@
+/// Step 1: Find how many hackers with consecutive submission records from the first day (2016-03-01) until the given day
+
+WITH 
+    Q1 AS (
+        SELECT hacker_id, submission_date
+        FROM (
+            SELECT DISTINCT hacker_id, submission_date, MIN(submission_date) OVER (PARTITION BY hacker_id) AS StartDate, DATEDIFF(day, '2016-03-01', submission_date) +1 as DateDiff, RANK() OVER(PARTITION BY hacker_id order by submission_date) AS DaysRanks
+            FROM submissions 
+            GROUP BY hacker_id, submission_date
+            ) AS T1
+        WHERE StartDate = '2016-03-01' /// This is to make sure that the hacker started from the first day of the challenge
+              AND DateDiff = DaysRanks /// This is to make sure that the hacker submitted in a row by the day being reviewed right now
+    ),
+    Q2 AS (
+        SELECT DISTINCT submission_date, COUNT(hacker_id) AS Counts1
+        FROM Q1
+        GROUP BY submission_date
+    ),
+
+/// Step 2: Find the hacker who made the most submissions on each day. Since this part is irrelevant from the first part, we will do a simple inner join on step 1 and step2. 
+/// Order logic, each day select the hacker with highest count number on that day (if there is a tie, go for the lower hacker_id), which is desc by count, asc by hacker_id
+    C2 AS (
+        SELECT submission_date, hacker_id, name 
+        FROM(
+            SELECT S.submission_date AS submission_date, S.hacker_id AS hacker_id, H.name AS name, ROW_NUMBER() OVER(PARTITION BY S.submission_date ORDER BY COUNT(DISTINCT S.submission_id) DESC, S.hacker_id) AS RankOrder
+            FROM submissions AS S
+            INNER JOIN Hackers AS H
+            ON S.hacker_id = H.hacker_id
+            GROUP BY S.submission_date, S.hacker_id, H.name) AS C1
+        WHERE  RankOrder = 1
+    )
+
+SELECT Q2.submission_date, Q2.Counts1, C2.hacker_id, C2.name 
+FROM Q2
+INNER JOIN C2
+ON Q2.submission_date = C2.submission_date
+ORDER BY Q2.submission_date;
