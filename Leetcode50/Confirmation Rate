@@ -1,0 +1,18 @@
+/// Key Point: using left join instead of always inner join when primary key in dimension table might be missing in the fact table, or when joining two facts table there might be null values in one of the tables
+
+SELECT S.user_id AS user_id, CASE WHEN D.totals IS NULL OR N.confirmed IS NULL THEN 0 ELSE ROUND(N.confirmed/D.totals,2) END AS confirmation_rate 
+FROM (
+    SELECT DISTINCT user_id
+    FROM Signups) AS S 
+LEFT JOIN (   /// Not all the uder_id has a request
+    SELECT user_id, COUNT(*) AS totals
+    FROM Confirmations 
+    GROUP BY user_id) AS D
+ON S.user_id = D.user_id
+LEFT JOIN (   /// Not all the uder_id has a confirmed request
+    SELECT user_id, COUNT(*) AS confirmed
+    FROM Confirmations 
+    WHERE action = 'confirmed'
+    GROUP BY user_id) AS N
+ON N.user_id = S.user_id
+ORDER BY S.user_id;
