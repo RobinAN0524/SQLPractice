@@ -1,0 +1,20 @@
+SELECT customer_id
+FROM Customer
+GROUP BY customer_id 
+HAVING COUNT(DISTINCT product_key) = (SELECT COUNT(*) FROM Product)
+
+
+/// Not necessary but it's fun to think about CROSS JOIN, in case they ask you which customer didn't buy which product
+SELECT DISTINCT C2.customer_id 
+FROM Customer AS C2
+WHERE C2.customer_id NOT IN(
+    SELECT C1.customer_id // Customers who have unpurchased products (as some of all producrs not in his or her purchased items) 
+    FROM Customer AS C1
+    CROSS JOIN Product AS P // Give us all the possible combinations
+    LEFT JOIN ( // This is just to give us all the existence unique combination that customers already brought
+        SELECT customer_id, product_key
+        FROM Customer 
+        GROUP BY customer_id, product_key) AS B
+    ON C.customer_id =  B.customer_id AND P.product_key = B.product_key // Left join to make sure we still got all the possible combinations, but still able to see if all the possibilities have been realized in B table
+    WHERE B.product_key IS NULL
+    ); // Those combination not realized
