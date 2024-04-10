@@ -1,2 +1,9 @@
-SELECT ROUND(SUM(CASE WHEN DATEDIFF(event_date, LAG(event_date) OVER(PARTITION BY player_id ORDER BY event_date)) = 1 THEN I ELSE O END)/ COUNT(*), 2) AS fraction  
-FROM Activity
+// JOIN approach
+SELECT ROUND(COUNT(A2.event_date) / COUNT(DISTINCT A1.player_id), 2) AS fraction  
+FROM Activity AS A1
+LEFT JOIN (
+    SELECT player_id, MIN(event_date) AS event_date
+    FROM Activity
+    GROUP BY player_id) AS A2
+ON A1.player_id = A2.player_id AND A1.event_date = DATE_ADD(A2.event_date, INTERVAL 1 DAY);
+
