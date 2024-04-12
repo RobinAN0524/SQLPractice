@@ -6,3 +6,15 @@ SELECT
     student 
 FROM Seat
 ORDER BY id
+
+/// MOD returns the remainder of a number divided by another number.
+/// Lead finds the one afterwards
+/// Lag finds the one forwards
+SELECT 
+    id,
+    CASE 
+        WHEN MOD(id,2) = 1 AND LEAD(student) OVER(ORDER BY id) IS NULL THEN student
+        WHEN MOD(id,2) = 1 THEN LEAD(student) OVER(ORDER BY id)
+        ELSE LAG(student) OVER(ORDER BY id) END AS student
+FROM Seat
+ORDER BY id
