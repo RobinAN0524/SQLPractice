@@ -1,0 +1,9 @@
+///
+SELECT DISTINCT num AS ConsecutiveNums 
+FROM (
+    SELECT id, LEAD(id, 1) OVER(ORDER BY id) AS id1, LEAD(id, 2) OVER(ORDER BY id) AS id2,
+    num, LEAD(num, 1) OVER(ORDER BY id) AS lead1, LEAD(num, 2) OVER(ORDER BY id) AS lead2 
+    FROM Logs) AS T
+WHERE id+1 = id1 AND id+2 = id2 AND num = lead1 AND num = lead2 
+
+///
