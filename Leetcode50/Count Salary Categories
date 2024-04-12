@@ -1,0 +1,43 @@
+/// Tricky part is, if there is no account with income in certain ranges, then the corresponding category wont show in the final output if we use the CASE IF. In this case, we might need to use the union all. 
+///  But you can create your own table by using union all, which is not hard. You dont need an actual table to select from. 
+SELECT T.category, CASE WHEN accounts_count IS NULL THEN 0 ELSE accounts_count END AS accounts_count
+FROM (
+    SELECT "Low Salary" AS category
+    UNION ALL 
+    SELECT "Average Salary" AS category
+    UNION ALL 
+    SELECT "High Salary" AS category) AS T
+LEFT JOIN (
+    SELECT CASE WHEN income > 50000 THEN "High Salary" WHEN income BETWEEN 20000 AND 50000 THEN "Average Salary" ELSE "Low Salary" END AS category, COUNT(*) AS accounts_count 
+    FROM Accounts 
+    GROUP BY CASE WHEN income > 50000 THEN "High Salary" WHEN income BETWEEN 20000 AND 50000 THEN "Average Salary" ELSE "Low Salary" END
+) AS A
+ON A.category = T.category
+
+
+
+
+SELECT 
+        'Low Salary' AS category,
+        COUNT(*) AS accounts_count
+    FROM 
+        Accounts
+    WHERE income < 20000
+
+UNION 
+
+    SELECT 
+        'Average Salary' AS category,
+        COUNT(*) AS accounts_count
+    FROM 
+        Accounts
+    WHERE income BETWEEN 20000 AND 50000
+
+UNION
+
+    SELECT 
+        'High Salary' AS category,
+        COUNT(*) AS accounts_count
+    FROM 
+        Accounts
+    WHERE income > 50000;
