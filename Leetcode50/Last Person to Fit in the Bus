@@ -1,0 +1,22 @@
+SELECT person_name
+FROM (
+    SELECT turn, person_name, weight, SUM(weight) OVER(ORDER BY turn) AS running_weight
+    FROM Queue
+    ) AS T
+WHERE running_weight <= 1000
+ORDER BY turn DESC
+LIMIT 1
+
+
+/// If I use subquery instead of the LIMIT 1
+/// Takeaway: if you only select one thing to be the matching benchmark in the outer query, you dont need to use groupby 我就是想看看在剩下的row里最大的是哪一个
+SELECT person_name
+FROM Queue
+WHERE turn = (
+    SELECT MAX(turn)
+    FROM(
+        SELECT turn, SUM(weight) OVER(ORDER BY turn) AS running_weight
+        FROM Queue
+    ) AS T
+    WHERE running_weight <= 1000 
+)
