@@ -1,0 +1,18 @@
+SELECT product_id, price
+FROM (
+    SELECT 
+        P.product_id, 
+        CASE 
+            WHEN C.new_price IS NULL THEN 10 
+            ELSE C.new_price END AS price,
+        CASE 
+            WHEN C.ranks IS NULL THEN 1 
+            ELSE C.ranks END AS ranks
+    FROM (
+        SELECT DISTINCT product_id FROM Products) AS P
+    LEFT JOIN (
+        SELECT product_id, new_price, RANK() OVER (PARTITION BY product_id ORDER BY change_date DESC)AS ranks 
+        FROM Products
+        WHERE change_date <= '2019-08-16') AS C
+    ON P.product_id = C.product_id) AS SUBS
+WHERE ranks = 1
