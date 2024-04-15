@@ -16,3 +16,20 @@ FROM (
         WHERE change_date <= '2019-08-16') AS C
     ON P.product_id = C.product_id) AS SUBS
 WHERE ranks = 1
+
+
+
+(SELECT DISTINCT product_id, 10 AS price
+FROM Products
+WHERE product_id NOT IN (
+    SELECT DISTINCT product_id
+    FROM Products
+    WHERE change_date <= '2019-08-16')
+GROUP BY product_id)
+UNION ALL
+(SELECT product_id, new_price AS price 
+FROM(
+    SELECT product_id, new_price, RANK() OVER(PARTITION BY product_id ORDER BY change_date DESC) AS ranks
+    FROM Products
+    WHERE change_date <= '2019-08-16') AS Sub
+WHERE ranks = 1)
