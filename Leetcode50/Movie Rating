@@ -1,0 +1,13 @@
+(SELECT U.name AS results  
+FROM (SELECT user_id, COUNT(*) AS counts FROM MovieRating GROUP BY user_id) AS MR
+LEFT JOIN Users AS U
+ON U.user_id = MR.user_id
+ORDER BY counts DESC, U.name ASC
+LIMIT 1)
+UNION ALL
+(SELECT M.title AS results  
+FROM (SELECT movie_id, AVG(rating) AS avg_rate FROM MovieRating WHERE DATE_FORMAT(created_at, "%Y-%m") = '2020-02' GROUP BY movie_id) AS MR1
+LEFT JOIN Movies AS M
+ON M.movie_id = MR1.movie_id
+ORDER BY avg_rate DESC, M.title ASC
+LIMIT 1)
