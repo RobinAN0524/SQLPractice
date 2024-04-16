@@ -1,0 +1,25 @@
+SELECT visited_on, amount, ROUND(average_amount,2) AS average_amount 
+FROM(
+    SELECT visited_on, SUM(amount) OVER(ORDER BY visited_on RANGE BETWEEN INTERVAL '6' DAY PRECEDING AND CURRENT ROW) AS amount, thedate, AVG(amount) OVER(ORDER BY visited_on RANGE BETWEEN INTERVAL '6' DAY PRECEDING AND CURRENT ROW) AS average_amount  
+    FROM (
+        SELECT visited_on, 
+            SUM(amount) AS amount, 
+            LAG(visited_on,6) OVER(ORDER BY visited_on) AS thedate
+        FROM Customer
+        GROUP BY visited_on) AS Sub) AS Sub1
+WHERE thedate IS NOT NULL
+ORDER BY visited_on
+
+
+
+
+WITH a AS (SELECT visited_on, SUM(amount) AS day_amount
+FROM Customer
+GROUP BY visited_on)
+
+SELECT l.visited_on, SUM(r.day_amount) AS amount, ROUND(SUM(r.day_amount)/7,2) AS average_amount
+FROM a AS l 
+LEFT JOIN a AS r
+ON DATEDIFF(l.visited_on, r.visited_on) BETWEEN 0 AND 6
+GROUP BY l.visited_on
+HAVING COUNT(r.visited_on) = 7
