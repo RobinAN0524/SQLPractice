@@ -1,0 +1,22 @@
+WITH IDTable AS (SELECT DISTINCT requester_id AS id
+FROM RequestAccepted
+WHERE requester_id NOT IN (SELECT DISTINCT accepter_id AS id FROM RequestAccepted)
+UNION ALL
+SELECT DISTINCT accepter_id AS id
+FROM RequestAccepted),
+BIGTABLE AS (
+SELECT * 
+FROM IDTable AS T
+INNER JOIN RequestAccepted AS A
+ON T.id = A.accepter_id 
+UNION ALL 
+SELECT * 
+FROM IDTable AS T
+INNER JOIN RequestAccepted AS Q
+ON T.id = Q.requester_id)
+
+SELECT id, COUNT(*) AS num
+FROM BIGTABLE
+GROUP BY id
+ORDER BY COUNT(*) DESC
+LIMIT 1
